@@ -50,7 +50,7 @@ export default function Hourlytraj() {
                                 <Col span={12}>
                                     <Slider
                                         min={0}
-                                        max={20}
+                                        max={10}
                                         step={0.01}
                                         value={typeof waterheight === 'number' ? waterheight : 0}
                                         onChange={handlechange}

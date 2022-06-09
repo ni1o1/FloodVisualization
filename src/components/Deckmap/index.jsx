@@ -290,7 +290,7 @@ export default function Deckmap() {
       layers={layers}
       initialViewState={{
         'baseMap': viewState, 'firstPerson': {
-          ...viewState, pitch: 0, zoom: 0, position: [0, 0, 2], transitionDuration: undefined,
+          ...viewState, pitch: 0, zoom: 0, position: [0, 0, 10], transitionDuration: undefined,
           transitionInterpolator: undefined
         }
       }}
