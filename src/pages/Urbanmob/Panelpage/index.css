@@ -1,12 +1,11 @@
 .ant-tabs-content {
-    width: 42vw;
     margin-left: -24px;
 }
 
 @font-face {
     font-family: 'iconfont';
     /* Project id 3165595 */
-    src: url('//at.alicdn.com/t/font_3165595_4efhdydr3av.woff2?t=1647687166471') format('woff2'), url('//at.alicdn.com/t/font_3165595_4efhdydr3av.woff?t=1647687166471') format('woff'), url('//at.alicdn.com/t/font_3165595_4efhdydr3av.ttf?t=1647687166471') format('truetype');
+    src: url('//at.alicdn.com/t/font_3165595_958fy492b9g.woff2?t=1651305286033') format('woff2'), url('//at.alicdn.com/t/font_3165595_958fy492b9g.woff?t=1651305286033') format('woff'), url('//at.alicdn.com/t/font_3165595_958fy492b9g.ttf?t=1651305286033') format('truetype');
 }
 
 .iconfont {
@@ -49,6 +48,26 @@
     content: "\e625";
 }
 
+.icon-customlink:before {
+    content: "\e600";
+}
+
+.icon-grid:before {
+    content: "\e604";
+}
+
+.icon-access:before {
+    content: "\e603";
+}
+
 .icon-firstperson:before {
     content: "\e602";
+}
+
+.icon-shadow:before {
+    content: "\ec7d";
+}
+
+.icon-vedio:before {
+    content: "\e632";
 }

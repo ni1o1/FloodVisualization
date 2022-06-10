@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react'
 import { Tabs, Layout, Button, Menu, Switch } from 'antd';
-import Hourlytraj from '../Hourlytraj';
+import Flood from '../Flood';
+import Visualcamera from '../Visualcamera';
 import { useSubscribe, useUnsubscribe } from '@/utils/usePubSub';
 
 import {
-
+  SettingOutlined,
   MenuUnfoldOutlined, MenuFoldOutlined,  NodeIndexOutlined
 } from '@ant-design/icons';
 import './index.css';
@@ -38,15 +39,18 @@ export default function Panelpage() {
     <Menu 
       mode="inline"
       onClick={handleClick}
-      defaultSelectedKeys={['hourlytraj']}
+      defaultSelectedKeys={['Flood']}
       style={{
         borderRight: 0,
         'overflowX': 'hidden',
         'overflowY': 'auto'
       }}
     >
-      <SubMenu key="sub1" icon={<NodeIndexOutlined />} title="Trajectory">
-        <Menu.Item key="hourlytraj" icon={<NodeIndexOutlined />}>Trajectory</Menu.Item>
+      <SubMenu key="sub1" icon={<NodeIndexOutlined />} title="洪涝灾害分析">
+        <Menu.Item key="Flood" icon={<NodeIndexOutlined />}>洪涝灾害分析</Menu.Item>
+      </SubMenu>
+      <SubMenu key="sub2" icon={<SettingOutlined />} title="设置">
+        <Menu.Item key="Visualcamera" icon={<span className="iconfont icon-vedio" />}>视角设置</Menu.Item>
       </SubMenu>
     </Menu>
     <Button type="text" onClick={toggleCollapsed} style={{ margin: '10px 16px' }}>
@@ -55,7 +59,7 @@ export default function Panelpage() {
   </Sider>
 
   )
-  const [activepage, setactivepage] = useState('hourlytraj')
+  const [activepage, setactivepage] = useState('Flood')
 
   //订阅activepage，检测到activepage一但改变，就更新tab
   unsubscribe('activepage')
@@ -68,8 +72,11 @@ export default function Panelpage() {
     <Layout>
       <Content>
         <Tabs tabPosition="left" size='small' renderTabBar={(a, b) => menu} activeKey={activepage}>
-          <TabPane key="hourlytraj" >
-            <Hourlytraj />
+          <TabPane key="Flood" >
+            <Flood />
+          </TabPane>
+          <TabPane key="Visualcamera" >
+            <Visualcamera />
           </TabPane>
         </Tabs>
       </Content>

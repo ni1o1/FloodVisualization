@@ -8,19 +8,15 @@ import { useInterval } from 'ahooks';
 import { AmbientLight, LightingEffect, MapView, FirstPersonView, _SunLight as SunLight } from '@deck.gl/core';
 import { BitmapLayer, IconLayer } from '@deck.gl/layers';
 import { TileLayer, TerrainLayer } from '@deck.gl/geo-layers';
-import {PolygonLayer} from '@deck.gl/layers';
+import { PolygonLayer } from '@deck.gl/layers';
 import { Tile3DLayer } from '@deck.gl/geo-layers';
 import { I3SLoader } from '@loaders.gl/i3s';
-
 //redux
 import { useDispatch, useMappedState } from 'redux-react-hook'
+//镜头redux
 import {
-  setTripsinfo_tmp,
-  setPlay_tmp,
-  setTime_tmp
-} from '@/redux/actions/traj'
-
-
+  setviewStates_tmp
+} from '@/redux/actions/Visualcamera'
 
 
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibmkxbzEiLCJhIjoiY2t3ZDgzMmR5NDF4czJ1cm84Z3NqOGt3OSJ9.yOYP6pxDzXzhbHfyk3uORg';
@@ -37,8 +33,6 @@ const ELEVATION_DECODER = {
 const TILESET_URL =
   'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0';
 
-
-
 export default function Deckmap() {
   const unsubscribe = useUnsubscribe();//清除更新组件重复订阅的副作用
   /*
@@ -47,14 +41,24 @@ export default function Deckmap() {
   //#region
   const mapState = useCallback(
     state => ({
-      traj: state.traj
+      traj: state.traj,
+      Visualcamera: state.Visualcamera
     }),
     []
   );
-  const { traj } = useMappedState(mapState);
+  const { Visualcamera, traj } = useMappedState(mapState);
   const { waterheight } = traj
   //dispatch
   const dispatch = useDispatch()
+  //#endregion
+  /*
+  ---------------镜头设置与截图功能---------------
+  */
+  //#region
+  const { fpvsize, viewStates } = Visualcamera
+  const setViewStates = (data) => {
+    dispatch(setviewStates_tmp(data))
+  }
 
   //#endregion
   /*
@@ -104,14 +108,7 @@ export default function Deckmap() {
     effects: [lightingEffect]
   };
 
-  //设定默认地图中心点
-  const [viewState, setViewState] = React.useState({
-    longitude: -122.4,
-    latitude: 37.78,
-    zoom: 15,
-    pitch: 45,
-    bearing: 0
-  });
+
 
   //默认地图底图
   const [mapStyle, setMapStyle] = React.useState('dark-v9');
@@ -127,6 +124,17 @@ export default function Deckmap() {
   useEffect(() => {
     //允许右键旋转视角
     document.getElementById("deckgl-wrapper").addEventListener("contextmenu", evt => evt.preventDefault());
+    //转换至用户自定义中心点
+    setViewStates({
+      firstPerson: viewStates.firstPerson,
+      baseMap: {
+        ...viewStates.baseMap,
+        longitude: -122.4,
+        latitude: 37.78,
+        zoom: 15,
+        pitch: 45
+      }
+    })
   }, [])
 
   //第一人称底图
@@ -145,29 +153,35 @@ export default function Deckmap() {
   //#region
   //旋转的函数
   function rotate(pitch, bearing, duration) {
-    setViewState({
-      ...viewState,
-      pitch: pitch,
-      bearing: bearing,
-      transitionDuration: duration,
-      transitionInterpolator: new FlyToInterpolator(),
-    });
+    setViewStates({
+      firstPerson: viewStates.firstPerson
+      ,
+      baseMap: {
+        ...viewStates.baseMap,
+        pitch: pitch,
+        bearing: bearing,
+        transitionDuration: duration,
+        transitionInterpolator: new FlyToInterpolator()
+      }
+    })
   }
   const [angle, setangle] = useState(120);
   const [interval, setInterval] = useState(undefined);
   useInterval(() => {
-    rotate(viewState.pitch, angle, 2000)
-    setangle(angle => angle + 30)
+    rotate(viewStates.baseMap.pitch, angle, 2000)
+    setangle(angle => angle + 10)
   }, interval, { immediate: true });
   //旋转的按钮
   function rotatecam() {
-    setangle(viewState.bearing + 30)
+
+    setangle(viewStates.baseMap.bearing + 10)
     if (interval != 2000) {
       setInterval(2000)
     } else {
       setInterval(undefined)
-      setViewState(viewState)
+      setViewStates(viewStates)
     }
+
   };
   //镜头旋转工具
   const [fristperson_isshow, setfristperson_isshow] = useState(false)
@@ -204,28 +218,11 @@ export default function Deckmap() {
   //#region
 
   const layers = [
-    fristperson_isshow ? new TileLayer({
-      // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Tile_servers
-      data: `https://api.mapbox.com/styles/v1/mapbox/${mapStyle}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibmkxbzEiLCJhIjoiY2t3ZDgzMmR5NDF4czJ1cm84Z3NqOGt3OSJ9.yOYP6pxDzXzhbHfyk3uORg`,
-      minZoom: 0,
-      maxZoom: 19,
-      tileSize: 512,
-      renderSubLayers: props => {
-        const {
-          bbox: { west, south, east, north }
-        } = props.tile;
-        return new BitmapLayer(props, {
-          data: null,
-          image: props.data,
-          bounds: [west, south, east, north]
-        });
-      }
-    }) : null,
     fristperson_isshow ? new IconLayer({//第一人称位置
       id: 'ref-point',
       data: [{
         color: [68, 142, 247],
-        coords: [viewState.longitude, viewState.latitude]
+        coords: [viewStates.baseMap.longitude, viewStates.baseMap.latitude,viewStates.firstPerson.position[2]]
       }],
       iconAtlas: 'images/firstperson.png',
       iconMapping: {
@@ -233,8 +230,8 @@ export default function Deckmap() {
       },
       sizeScale: 5,
       getIcon: d => 'marker',
-      getPosition: d => [...d.coords, 30],
-      getSize: d => 5,
+      getPosition: d => [...d.coords, 0],
+      getSize: d => 10,
       getColor: d => d.color
     }) : null,
     new TerrainLayer({
@@ -256,10 +253,10 @@ export default function Deckmap() {
     new PolygonLayer({
       id: 'flood',
       data: [{
-        coords: [[-122.2, 37.08,waterheight],
-                [-122.2, 37.98,waterheight],
-                [-122.7, 37.98,waterheight],
-                [-122.7, 37.08,waterheight]]
+        coords: [[-122.2, 37.08, waterheight],
+        [-122.2, 37.98, waterheight],
+        [-122.7, 37.98, waterheight],
+        [-122.7, 37.08, waterheight]]
       }],
       pickable: false,
       stroked: false,
@@ -268,7 +265,7 @@ export default function Deckmap() {
       lineWidthMinPixels: 1,
       getPolygon: d => d.coords,
       opacity: 0.5,
-      getFillColor: d => [139,117,0],
+      getFillColor: d => [139, 117, 0],
     })
   ];
   //#endregion
@@ -276,24 +273,35 @@ export default function Deckmap() {
   ---------------渲染地图---------------
   */
   //#region
-  const onViewStateChange = (newviewState) => {
-    const { viewId } = newviewState
-    const nviewState = newviewState.viewState
-    if (viewId == 'firstPerson') {
-      setViewState({ ...viewState, longitude: nviewState.longitude, latitude: nviewState.latitude, bearing: nviewState.bearing })
-    } else if (viewId == 'baseMap') {
-      setViewState({ ...viewState, longitude: nviewState.longitude, latitude: nviewState.latitude, pitch: nviewState.pitch, bearing: nviewState.bearing, zoom: nviewState.zoom })
+  const onViewStateChange = useCallback(({ viewId, viewState }) => {
+    if (viewId === 'baseMap') {
+      setViewStates({
+        baseMap: viewState,
+        firstPerson: {
+          ...viewStates.firstPerson,
+          longitude: viewState.longitude,
+          latitude: viewState.latitude,
+          bearing: viewState.bearing,
+          zoom: viewState.zoom,
+        }
+      });
+    } else {
+      setViewStates({
+        baseMap: {
+          ...viewStates.baseMap,
+          zoom: viewStates.baseMap.zoom,
+          longitude: viewState.longitude,
+          latitude: viewState.latitude,
+          bearing: viewState.bearing,
+        },
+        firstPerson: { ...viewState, fovy: 75 }
+      });
     }
-  }
+  }, [viewStates]);
   return (
     <DeckGL
       layers={layers}
-      initialViewState={{
-        'baseMap': viewState, 'firstPerson': {
-          ...viewState, pitch: 0, zoom: 0, position: [0, 0, 10], transitionDuration: undefined,
-          transitionInterpolator: undefined
-        }
-      }}
+      viewState={viewStates}
       effects={theme.effects}
       controller={{ doubleClickZoom: false, inertia: true, touchRotate: true }}
       style={{ zIndex: 0 }}
@@ -315,7 +323,19 @@ export default function Deckmap() {
           </div>
         </StaticMap>
         <div className='mapboxgl-ctrl-bottom-right' style={{ bottom: '80px' }}>
-          <NavigationControl onViewportChange={viewport => setViewState(viewport)} />
+          <NavigationControl onViewportChange={viewport => {
+
+            setViewStates({
+              baseMap: {
+                ...viewStates.baseMap,
+                longitude: viewport.longitude,
+                latitude: viewport.latitude,
+                bearing: viewport.bearing,
+                zoom: viewport.zoom
+              },
+              firstPerson: viewStates.firstPerson
+            })
+          }} />
           {cameraTools}
         </div>
       </MapView>
@@ -323,10 +343,10 @@ export default function Deckmap() {
         controller={{ scrollZoom: false, dragRotate: true, inertia: true }}
         far={10000}
         focalDistance={1.5}
-        x={'68%'}
-        y={20}
-        width={'30%'}
-        height={'50%'}
+        x={(100 - fpvsize.width) + '%'}
+        y={0}
+        width={fpvsize.width + '%'}
+        height={fpvsize.height + '%'}
         clear={true}>
         <div style={minimapBackgroundStyle} /> </FirstPersonView>)}
     </DeckGL>

@@ -40,7 +40,7 @@ export default function Header(props) {
                 avatar={{ src: 'images/logodark_3durbanmob.png', shape: 'square' }}
                 {...props}
                 extra={[
-                    <>
+                    <div key = 'setting'>
                         <Dropdown key='settings' overlay={menu} trigger={['click']}>
                             <Button key='Settingbuttom' type="text" >
                                 <SettingOutlined />
@@ -49,7 +49,7 @@ export default function Header(props) {
                         <Button key='navicollapsed' type="text" onClick={toggleCollapsed}>
                             {React.createElement(collapsed ? UpOutlined : DownOutlined)}
                         </Button>
-                    </>
+                    </div>
                 ]}
             >
             </PageHeader> : <Button key='navicollapsed' type="text" onClick={toggleCollapsed}>
