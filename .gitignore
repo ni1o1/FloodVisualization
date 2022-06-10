@@ -6,4 +6,5 @@ package.json
 package-lock.json
 config-overrides.js
 yarn.lock
+public
 src
